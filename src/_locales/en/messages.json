@@ -1,0 +1,113 @@
+{
+  "appName": {
+    "message": "Yooz ChatGPT"
+  },
+  "appDesc": {
+    "message": "Use ChatGPT while browsing the web"
+  },
+  "openYooz": {
+    "message": "Yooz ChatGPT"
+  },
+  "tabNew": {
+    "message": "New writing"
+  },
+  "tabReply": {
+    "message": "Reply"
+  },
+  "tabContext": {
+    "message": "Context"
+  },
+  "messageLabel": {
+    "message": "Message or conversation"
+  },
+  "selectionLabel": {
+    "message": "Text context"
+  },
+  "contextPlaceholder": {
+    "message": "Context..."
+  },
+  "selectionPromptLabel": {
+    "message": "Ask ChatGPT to explain, translate, edit.."
+  },
+  "writingPromptLabel": {
+    "message": "What do you want to write"
+  },
+  "messagePrompt": {
+    "message": "Write a message..."
+  },
+  "replyPrompt": {
+    "message": "Write a reply..."
+  },
+  "writingPrompt": {
+    "message": "Write an article..."
+  },
+  "emailPrompt": {
+    "message": "Write an email..."
+  },
+  "linkedinPostPrompt": {
+    "message": "Write a Linkedin post..."
+  },
+  "commentPrompt": {
+    "message": "Write a comment..."
+  },
+  "promptPlaceholder": {
+    "message": "Ask ChatGPT..."
+  },
+  "submitButtonText": {
+    "message": "Generate"
+  },
+  "popupOpenCard": {
+    "message": "Open Yooz ChatGPT"
+  },
+  "popupShortcut": {
+    "message": "Setup keyboard shortcut"
+  },
+  "popupSettings": {
+    "message": "Open Extension Settings"
+  },
+  "options": {
+    "message": "Options"
+  },
+  "optFeedback": {
+    "message": "Feedback"
+  },
+  "optProvider": {
+    "message": "AI Provider"
+  },
+  "optProviderChatGPT": {
+    "message": "ChatGPT webapp"
+  },
+  "optProviderChatGPTDesc": {
+    "message": "The API that powers ChatGPT webapp, free, but sometimes unstable"
+  },
+  "optProviderOpenAI": {
+    "message": "OpenAI API"
+  },
+  "optProviderOpenAIDesc": {
+    "message": "OpenAI official API, more stable, <b>charge by usage</b>"
+  },
+  "optProviderOpenAIKey": {
+    "message": "API key"
+  },
+  "optProviderOpenAIKeyTip": {
+    "message": "You can find or create your API key <a href='https://platform.openai.com/account/api-keys' target='_blank' rel='noreferrer'>here</a>"
+  },
+  "optProviderSave": {
+    "message": "Save"
+  },
+  "optMisc": {
+    "message": "Misc"
+  },
+  "optSelectionButton": {
+    "message": "Show Yooz button after text selection"
+  },
+  "optSRButton": {
+    "message": "Show Yooz button for smart reply"
+  },
+  "optSRDesc": {
+    "message": "Available only in Linkedin, Gmail, Outlook and Slack (we will add more websites soon)"
+  },
+  "optAutoDelete": {
+    "message": "Auto delete ChatGPT conversations after generation"
+  }
+}
