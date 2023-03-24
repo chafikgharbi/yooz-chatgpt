@@ -61,7 +61,7 @@ export class ChatGPTProvider implements Provider {
   private async getModelName(): Promise<string> {
     try {
       const models = await this.fetchModels()
-      return models[0].slug
+      return models[2].slug
     } catch (err) {
       console.error(err)
       return 'text-davinci-002-render'
@@ -106,7 +106,7 @@ export class ChatGPTProvider implements Provider {
         console.debug('sse message', message)
         if (message === '[DONE]') {
           params.onEvent({ type: 'done' })
-          cleanup()
+          // cleanup()
           return
         }
         let data
