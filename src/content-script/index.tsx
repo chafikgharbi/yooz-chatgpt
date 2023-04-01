@@ -18,7 +18,7 @@ async function run() {
 
   const body = document.body;
 
-  const renderYoozButton = (anchor, selection: boolean, containerStyle = '', size = 25) => {
+  const renderYoozButton = (target, insertHook = null, selection: boolean, containerStyle = '', size = 25) => {
     const button = document.createElement('div');
     button.className = 'yooz-button'
     button.classList.add(selection ? 'yooz-button-selection' : 'yooz-button-tool')
@@ -56,7 +56,11 @@ async function run() {
           transform="matrix(0.77061411,-0.63730204,0,1,0,0)" />
       </g>
     </svg>`;
-    anchor.appendChild(button);
+    if(insertHook) {
+      insertHook(button, target)
+    } else {
+      target.appendChild(button);
+    }
     return button
   }
 
@@ -83,7 +87,8 @@ async function run() {
 
         // Render Yooz button
         const button = renderYoozButton(
-          anchor.buttonContainer(addedNode),
+          addedNode,
+          anchor.insertButtonHook,
           false,
           anchor.buttonStyle || '',
           anchor.buttonSize || 25
@@ -163,7 +168,7 @@ async function run() {
         const selectionRange = window.getSelection().getRangeAt(0);
         const boundingRect = selectionRange.getBoundingClientRect();
 
-        const button = renderYoozButton(body, true, `
+        const button = renderYoozButton(body, null, true, `
       position: absolute;
       opacity: 0.8;
       top: ${boundingRect.top > 50 ?

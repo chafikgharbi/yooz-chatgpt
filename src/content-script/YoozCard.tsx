@@ -23,7 +23,7 @@ interface Props {
   draggable?: boolean
 }
 
-// Add useMeme useCallBack useLayoutEffect... for performance
+// Add useMemo useCallBack useLayoutEffect... for performance
 function YoozCard({
   isSelection: __isSelection,
   isMessage: __isMessage,
@@ -40,6 +40,7 @@ function YoozCard({
 }: Props) {
 
   const [loading, setLoading] = useState<boolean>(false)
+  const [generating, setGenerating] = useState<boolean>(false)
   const [isSelection, setIsSelection] = useState<boolean>(__isSelection)
   const [isMessage, setIsMessage] = useState<boolean>(__isMessage)
   const [context, setContext] = useState<string>(__context)
@@ -51,9 +52,26 @@ function YoozCard({
   const [showTip, setShowTip] = useState(false)
   const [width, setWidth] = useState(0)
   const [hegiht, setHeight] = useState(0)
+  const contentRef = useRef(null)
   const ref = useRef(null)
   const bottomRef = useRef(null)
   const topMargin = isSelection ? 30 : 0
+
+  const [showHistory, setShowHistory] = useState(!__prompt)
+  const [promptHistory, setPromptHistory] = useState<string[]>([])
+
+  useEffect(() => {
+    Browser.storage.local.get('promptHistory').then((res) => {
+      if (res.promptHistory) setPromptHistory(res.promptHistory)
+    })
+  }, [])
+
+  const updatePromptHistory = (prompt: string) => {
+    const newPromptHistory = [prompt, ...promptHistory].slice(0, 5)
+    setPromptHistory(newPromptHistory)
+    Browser.storage.local.set({ promptHistory: newPromptHistory })
+  }
+
   useEffect(() => {
     setWidth(ref?.current?.clientWidth || 0)
     setHeight(ref?.current?.clientHeight || 0)
@@ -70,9 +88,28 @@ function YoozCard({
   }
 
   const write = () => {
+
+    let currentScrollTop = 0
+    let isScrollingUp = false
+
+    const onScroll = () => {
+      console.log(contentRef.current.scrollTop, currentScrollTop)
+      if (contentRef.current.scrollTop > currentScrollTop) {
+        isScrollingUp = false
+      }
+      else {
+        isScrollingUp = true
+      }
+      currentScrollTop = contentRef.current.scrollTop
+    }
+
+    contentRef.current.addEventListener('scroll', onScroll)
+
+    setShowHistory(false)
     const _context = context || (document.getElementById("yooz-context") as HTMLInputElement)?.value
     const _prompt = prompt || (document.getElementById("yooz-prompt") as HTMLInputElement)?.value
     if (!_prompt || _prompt === '') return
+    updatePromptHistory(_prompt)
     setLoading(true)
     let newPrompt = _prompt
     // TODO get context from the input
@@ -90,27 +127,34 @@ function YoozCard({
         if (targetInput && !isSelection) {
           targetInput[targetInput.isContentEditable ? 'innerText' : 'value'] = msg.text
         }
-        setLoading(false)
+        setGenerating(true)
       } else if (msg.error) {
         // TODO maybe make error logger
         setError(msg.error)
-        setLoading(false)
+        setGenerating(false)
       } else if (msg.event === 'DONE') {
         if (response && isSelection && editableSelection) replaceSelection(response)
         // TODO make it dependent
         if (isMessage) document.querySelector('.msg-form__send-button')?.removeAttribute('disabled')
         setDone(true)
-        setLoading(false)
+        setGenerating(false)
+      } else {
+        setGenerating(false)
       }
       setLoading(false)
-      bottomRef.current?.scrollIntoView()
+      if (!isScrollingUp) bottomRef.current?.scrollIntoView()
     }
     port.onMessage.addListener(listener)
     port.postMessage({ question: newPrompt })
     return () => {
       port.onMessage.removeListener(listener)
       port.disconnect()
+      contentRef.current.removeEventListener('scroll', onScroll)
     }
+  }
+
+  const stopGenerating = () => {
+    Browser.runtime.sendMessage({ type: 'STOP_GENERATING' })
   }
 
   useEffect(() => {
@@ -196,7 +240,7 @@ function YoozCard({
             </div>
           </div>
         </div>
-        <div className="yooz-card-content">
+        <div className="yooz-card-content" ref={contentRef}>
           {/* TODO: make types clickable */}
           <div className="yooz-types">
             <div
@@ -242,15 +286,23 @@ function YoozCard({
             </div>
           }
           <div className="yooz-card-row">
-            <label className="yooz-card-label">{_t(isSelection ? "selectionPromptLabel" : "writingPromptLabel")}</label>
-            <textarea
-              rows={2}
-              id="yooz-prompt"
-              className="yooz-card-textarea"
-              placeholder={_t('promptPlaceholder')}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
+            <form autoComplete="on">
+              <label className="yooz-card-label yooz-prompt-label">
+                <div>{_t(isSelection ? "selectionPromptLabel" : "writingPromptLabel")}</div>
+                <div className={`yooz-history-button ${showHistory ? 'yooz-active' : ''}`} onClick={() => setShowHistory(!showHistory)}>
+                  History
+                </div>
+              </label>
+              <textarea
+                rows={2}
+                autoComplete="on"
+                id="yooz-prompt"
+                className="yooz-card-textarea"
+                placeholder={_t('promptPlaceholder')}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
+            </form>
           </div>
           {(error === 'UNAUTHORIZED' || error === 'CLOUDFLARE') ?
             <div className="yooz-notif yooz-error">
@@ -303,11 +355,29 @@ function YoozCard({
                   </p>
                 )}
               </div>
-              : null}
+              : (showHistory && promptHistory.length) ?
+                <>
+                  <div className='yooz-history-label'>History</div>
+                  {promptHistory.map((prompt, index) => (
+                    <div key={index}>
+                      <div className="yooz-history-item" onClick={() => {
+                        setShowHistory(false)
+                        setPrompt(prompt)
+                      }}>{prompt}</div>
+                    </div>
+                  ))}
+                </>
+                : null}
           <div ref={bottomRef} />
         </div>
         <div className="yooz-card-footer">
-          <button className="yooz-generate-button" onClick={write}>{loading ? 'Loading...' : _t('submitButtonText')}</button>
+          <button className="yooz-generate-button" onClick={(loading || generating) ? null : write}>
+            {loading ? 'Loading...' : generating ? 'Generating...' : _t('submitButtonText')}
+          </button>
+          {/* // WIP stop generation */}
+          {/* <button className="yooz-generate-button" onClick={!loading ? generating ? stopGenerating : write : null}>
+            {loading ? 'Loading...' : generating ? 'Stop generating' : _t('submitButtonText')}
+          </button> */}
         </div>
       </div>
     </Draggable>

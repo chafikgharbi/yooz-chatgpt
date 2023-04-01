@@ -1,5 +1,4 @@
 import { CssBaseline, GeistProvider, Radio, Select, Text, Toggle, useToasts } from '@geist-ui/core'
-import { capitalize } from 'lodash-es'
 import { useCallback, useEffect, useState } from 'preact/hooks'
 import '../base.css'
 import {

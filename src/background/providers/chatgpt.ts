@@ -1,5 +1,6 @@
 import ExpiryMap from 'expiry-map'
 import { v4 as uuidv4 } from 'uuid'
+import { getUserConfig } from '../../config'
 import { fetchSSE } from '../fetch-sse'
 import { GenerateAnswerParams, Provider } from '../types'
 
@@ -59,9 +60,14 @@ export class ChatGPTProvider implements Provider {
   }
 
   private async getModelName(): Promise<string> {
+    const userConfig = await getUserConfig()
+    console.log('UserConfig', userConfig.enableCLM)
     try {
       const models = await this.fetchModels()
-      return models[2].slug
+
+      const gpt4Models = models.filter((model) => model.slug.includes('gpt-4'))
+
+      return userConfig.enableCLM && gpt4Models.length ? gpt4Models[gpt4Models.length - 1].slug : models[0].slug
     } catch (err) {
       console.error(err)
       return 'text-davinci-002-render'
@@ -72,6 +78,7 @@ export class ChatGPTProvider implements Provider {
     let conversationId: string | undefined
 
     const cleanup = () => {
+      console.log('Cleanup')
       if (conversationId) {
         setConversationProperty(this.token, conversationId, { is_visible: false })
       }
@@ -103,7 +110,7 @@ export class ChatGPTProvider implements Provider {
         parent_message_id: uuidv4(),
       }),
       onMessage(message: string) {
-        console.debug('sse message', message)
+        // console.debug('sse message', message) // TODO uncomment
         if (message === '[DONE]') {
           params.onEvent({ type: 'done' })
           // cleanup()

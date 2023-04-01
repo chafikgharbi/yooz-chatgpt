@@ -1,8 +1,9 @@
-import { Button, Input, Select, Spinner, Tabs, useInput, useToasts } from '@geist-ui/core'
+import { Button, Input, Select, Spinner, Tabs, Text, Toggle, useInput, useToasts } from '@geist-ui/core'
+import { useEffect } from 'preact/hooks'
 import { FC, useCallback, useState } from 'react'
 import useSWR from 'swr'
 // import { fetchExtensionConfigs } from '../api'
-import { getProviderConfigs, ProviderConfigs, ProviderType, saveProviderConfigs } from '../config'
+import { getProviderConfigs, getUserConfig, ProviderConfigs, ProviderType, saveProviderConfigs, updateUserConfig } from '../config'
 import { _t } from '../utils'
 
 interface ConfigProps {
@@ -46,11 +47,42 @@ const ConfigPanel: FC<ConfigProps> = ({ config, models }) => {
     setToast({ text: 'Changes saved', type: 'success' })
   }, [apiKeyBindings.value, model, models, setToast, tab])
 
+  // CLM = ChatGPT latest model
+  const [enableCLM, toggleCLM] = useState<boolean>(true)
+
+  useEffect(() => {
+    getUserConfig().then((config) => {
+      toggleCLM(config.enableCLM)
+    })
+  }, [tab])
+
+  const onToggleCLMChange = useCallback(
+    (checked: boolean) => {
+      updateUserConfig({ enableCLM: checked })
+      setToast({ text: 'Changes saved', type: 'success' })
+    },
+    [setToast],
+  )
+
   return (
     <div className="flex flex-col gap-3">
       <Tabs value={tab} onChange={(v) => setTab(v as ProviderType)}>
         <Tabs.Item label={_t('optProviderChatGPT')} value={ProviderType.ChatGPT}>
           {_t('optProviderChatGPTDesc')}
+
+          <div className="flex flex-row mb-5">
+            <div className='mt-1'>
+              <Toggle checked={enableCLM} onChange={({ target }) => onToggleCLMChange(target.checked)} />
+            </div>
+            <div className='ml-4'>
+              <Text b className='block'>
+                {_t('optProviderChatGPT4')}
+              </Text>
+              <Text className='block mt-1 text-sm'>
+                {_t('optProviderChatGPT4Desc')}
+              </Text>
+            </div>
+          </div>
         </Tabs.Item>
         <Tabs.Item label={_t('optProviderOpenAI')} value={ProviderType.GPT3}>
           <div className="flex flex-col gap-2">

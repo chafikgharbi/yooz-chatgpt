@@ -2,6 +2,7 @@ import { defaults } from 'lodash-es'
 import Browser from 'webextension-polyfill'
 
 const userConfigWithDefaultValue = {
+  enableCLM: false,
   selectionButton: true,
   SRButton: true,
 }

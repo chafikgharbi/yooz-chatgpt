@@ -50,6 +50,9 @@
   "commentPrompt": {
     "message": "Rédigez un commentaire..."
   },
+  "reviewCodePrompt": {
+    "message": "Examinez le commit pour détecter des erreurs et des améliorations potentielles"
+  },
   "promptPlaceholder": {
     "message": "Demandez à ChatGPT..."
   },
@@ -79,6 +82,12 @@
   },
   "optProviderChatGPTDesc": {
     "message": "L'API qui alimente l'application web ChatGPT, gratuite, mais parfois instable"
+  },
+  "optProviderChatGPT4": {
+    "message": "Utilisez GPT-4 s'il est disponible."
+  },
+  "optProviderChatGPT4Desc": {
+    "message": "Le modèle GPT-4 n'est disponible que pour les utilisateurs Plus et dispose d'un quota très limité. Ne le sélectionnez pas si vous êtes préoccupé par la limite de quota."
   },
   "optProviderOpenAI": {
     "message": "API OpenAI"

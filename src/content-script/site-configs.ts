@@ -9,7 +9,7 @@ export interface siteConfig {
     contextPrompt?: string
     context?: (anchor: HTMLElement) => string
     targetInput?: (anchor: HTMLElement) => HTMLElement
-    buttonContainer: (anchor: HTMLElement) => HTMLElement
+    insertButtonHook?: (button: HTMLElement, target: HTMLElement) => void
     cardContainer?: (anchor: HTMLElement) => HTMLElement
     buttonSize?: number,
     buttonStyle?: string
@@ -19,14 +19,18 @@ export interface siteConfig {
 export const config: Record<string, siteConfig> = {
   google: {
     anchors: [
-      // Email
+      // Gmail
       {
         condition: (node) => node?.classList?.contains('btC'),
-        buttonContainer: (anchor) => anchor,
+        openCondition: (node) => !!node.closest('.editable'),
+        buttonSize: 20,
+        buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
         cardContainer: () => document.body,
         prompt: _t('emailPrompt'),
         context: (anchor) => {
           const parent = anchor.closest('.G3.G2')
+          if (!parent) return ''
           const context = `Email:\n${(parent.querySelector('.a3s.aiL') as HTMLElement).innerText}\n\nReply:`
           return context
         },
@@ -42,7 +46,7 @@ export const config: Record<string, siteConfig> = {
         condition: (node) => node?.classList?.contains('share-creation-state__additional-toolbar') ||
           node?.classList?.contains('share-creation-state__additional-toolbar-with-redesigned-detours'),
         openCondition: (node) => !!node.closest('.share-creation-state__text-editor'),
-        buttonContainer: (anchor) => anchor,
+        insertButtonHook: (button, target) => target.appendChild(button),
         prompt: _t('linkedinPostPrompt'),
         cardContainer: (anchor = null) => anchor.closest('.share-box'),
         targetInput: (anchor) => anchor.closest('.artdeco-modal').querySelector('.ql-editor')
@@ -51,7 +55,6 @@ export const config: Record<string, siteConfig> = {
       {
         condition: (node) => node?.classList?.contains('msg-form__left-actions'),
         openCondition: (node) => !!node.closest('.msg-form__contenteditable'),
-        buttonContainer: (anchor) => anchor,
         buttonStyle: 'margin-top: 6px;margin-left: 6px;',
         cardContainer: () => document.body,
         buttonSize: 20,
@@ -90,7 +93,9 @@ export const config: Record<string, siteConfig> = {
       {
         condition: (node) => node?.classList?.contains('comments-comment-box'),
         openCondition: (node) => !!node.closest('.comments-comment-box-comment__text-editor'),
-        buttonContainer: (anchor) => anchor,
+        insertButtonHook: (button, target) => target.querySelector('.mlA').appendChild(button),
+        buttonSize: 20,
+        buttonStyle: 'width: 40px;height: 40px;display: flex;align-items: center;justify-content: center;',
         prompt: _t('commentPrompt'),
         contextPrompt: _t('replyPrompt'),
         cardContainer: () => document.body,
@@ -113,7 +118,8 @@ export const config: Record<string, siteConfig> = {
       // Slack message
       {
         condition: (node) => node?.classList?.contains('c-texty_buttons'),
-        buttonContainer: (anchor) => anchor,
+        buttonSize: 20,
+        buttonStyle: 'width: 28px;height: 28px;margin: 2px;display: flex;align-items: center;justify-content: center;',
         prompt: _t('messagePrompt'),
         contextPrompt: _t('replyPrompt'),
         cardContainer: () => document.body,
@@ -123,6 +129,60 @@ export const config: Record<string, siteConfig> = {
           const context = `Message:\n${(parent?.querySelector('.c-message_kit__gutter') as HTMLElement)?.innerText}\n\nReply:`
           return context
         }
+      }
+    ]
+  },
+  live: {
+    anchors: [
+      // Outlook
+      {
+        condition: (node) => node?.classList?.contains('OTADH') || node?.classList?.contains('vBoqL'),
+        openCondition: (node) => !!node.closest('.dFCbN'),
+        buttonSize: 25,
+        buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
+        cardContainer: () => document.body,
+        prompt: _t('emailPrompt'),
+        context: (anchor) => {
+          const parent = anchor.closest('.aVla3')
+          if (!parent) return ''
+          const context = `Email:\n${(parent.querySelector('.XbIp4') as HTMLElement).innerText}\n\nReply:`
+          return context
+        },
+        contextPrompt: _t('replyPrompt'),
+        targetInput: (anchor) => anchor.closest('.dMm6A').querySelector('.dFCbN')
+      }
+    ]
+  },
+  github: {
+    anchors: [
+      // Github review
+      {
+        condition: (node) => node?.classList?.contains('toolbar-commenting'),
+        openCondition: (node) => !!node.closest('.comment-form-textarea'),
+        buttonSize: 25,
+        buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
+        cardContainer: () => document.body,
+        context: (anchor) => {
+          const parent = anchor.closest('.js-file')
+          const table = parent.querySelector('tbody')
+          const rows = table.querySelectorAll('tr')
+          let context = 'Code changes:\n\n'
+
+          for (const row of rows) {
+            // if (row.classList.contains('js-expandable-line') || row.querySelector('.non-expandable')) continue
+            if (row.classList.contains('inline-comments')) break
+            const code = (row.querySelector('.blob-code-inner') as HTMLElement)?.innerText
+            if (row.querySelector('.blob-code-addition')) context += `+ ${code}\n`
+            else if (row.querySelector('.blob-code-deletion')) context += `- ${code}\n`
+            else context += `${code}\n`
+          }
+
+          return context
+        },
+        contextPrompt: _t('reviewCodePrompt'),
+        targetInput: (anchor) => anchor.closest('.previewable-comment-form').querySelector('.comment-form-textarea')
       }
     ]
   },

@@ -5,6 +5,8 @@ import { OpenAIProviderChat } from './providers/openai-chat'
 import { OpenAIProviderText } from './providers/openai-text'
 import { Provider } from './types'
 
+let stopGenerating = null
+
 async function generateAnswers(port: Browser.Runtime.Port, question: string) {
   const providerConfigs = await getProviderConfigs()
 
@@ -24,6 +26,7 @@ async function generateAnswers(port: Browser.Runtime.Port, question: string) {
   }
 
   const controller = new AbortController()
+
   port.onDisconnect.addListener(() => {
     controller.abort()
     cleanup?.()
@@ -40,6 +43,8 @@ async function generateAnswers(port: Browser.Runtime.Port, question: string) {
       port.postMessage(event.data)
     },
   })
+
+  stopGenerating = cleanup
 }
 
 Browser.runtime.onConnect.addListener((port) => {
@@ -55,7 +60,11 @@ Browser.runtime.onConnect.addListener((port) => {
 })
 
 Browser.runtime.onMessage.addListener(async (message) => {
-  if (message.type === 'FEEDBACK') {
+  if (message.type === 'STOP_GENERATING') {
+    console.log('STOP_GENERATING')
+    stopGenerating?.()
+  }
+  else if (message.type === 'FEEDBACK') {
     const token = await getChatGPTAccessToken()
     await sendMessageFeedback(token, message.data)
   } else if (message.type === 'OPEN_OPTIONS_PAGE') {

@@ -50,6 +50,9 @@
   "commentPrompt": {
     "message": "Write a comment..."
   },
+  "reviewCodePrompt": {
+    "message": "Review the commit for errors and potential improvements"
+  },
   "promptPlaceholder": {
     "message": "Ask ChatGPT..."
   },
@@ -79,6 +82,12 @@
   },
   "optProviderChatGPTDesc": {
     "message": "The API that powers ChatGPT webapp, free, but sometimes unstable"
+  },
+  "optProviderChatGPT4": {
+    "message": "Use GPT-4 if available"
+  },
+  "optProviderChatGPT4Desc": {
+    "message": "The GPT-4 model is only available for Plus users and has a very limited quota. Do not select this if you're concerned about the quota limit."
   },
   "optProviderOpenAI": {
     "message": "OpenAI API"
