@@ -36,7 +36,7 @@
     "message": "Rédigez un message..."
   },
   "replyPrompt": {
-    "message": "Rédigez une réponse..."
+    "message": "Répondre..."
   },
   "writingPrompt": {
     "message": "Rédigez un article..."
@@ -59,6 +59,18 @@
   "submitButtonText": {
     "message": "Générer"
   },
+  "loginMessage": {
+    "message": "Veuillez vous connecter et passer la vérification Cloudflare sur"
+  },
+  "loginMessageDesc": {
+    "message": "OpenAI nécessite de passer une vérification de sécurité de temps en temps. Si cela se produit fréquemment, changez de fournisseur d'IA pour l'API OpenAI dans les options de l'extension."
+  },
+  "ratingMessage": {
+    "message": "Avez-vous aimé cette extension ? Donnez-nous une note de 5 étoiles sur"
+  },
+  "history": {
+    "message": "Historique"
+  },
   "popupOpenCard": {
     "message": "Ouvrir Yooz ChatGPT"
   },
@@ -71,8 +83,8 @@
   "options": {
     "message": "Options"
   },
-  "optFeedback": {
-    "message": "Feedback"
+  "optIssue": {
+    "message": "Problème ou feedback"
   },
   "optProvider": {
     "message": "Fournisseur d'IA"

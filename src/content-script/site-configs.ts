@@ -2,13 +2,15 @@ import { _t } from "../utils"
 
 export interface siteConfig {
   anchors: {
-    // TODO maybe rename to buttonCOndition
+    // TODO maybe rename to buttonCondition
     condition: (node: HTMLElement) => boolean
     openCondition?: (node: HTMLElement) => boolean
     prompt?: string,
     contextPrompt?: string
     context?: (anchor: HTMLElement) => string
     targetInput?: (anchor: HTMLElement) => HTMLElement
+    beforeGenerateHook?: (anchor: HTMLElement) => void
+    afterGenerateHook?: (anchor: HTMLElement) => void
     insertButtonHook?: (button: HTMLElement, target: HTMLElement) => void
     cardContainer?: (anchor: HTMLElement) => HTMLElement
     buttonSize?: number,
@@ -61,6 +63,8 @@ export const config: Record<string, siteConfig> = {
         prompt: _t('messagePrompt'),
         contextPrompt: _t('replyPrompt'),
         targetInput: (anchor) => anchor.closest('.msg-convo-wrapper').querySelector('.msg-form__contenteditable'),
+        beforeGenerateHook: (anchor) => anchor.closest('.msg-convo-wrapper')?.querySelector('.msg-form__placeholder')?.classList?.remove("msg-form__placeholder"),
+        afterGenerateHook: (anchor) => anchor.closest('.msg-convo-wrapper')?.querySelector('.msg-form__send-button')?.removeAttribute('disabled'),
         context: (anchor) => {
           function getMessages(anchor, lastChecked = null, i = 0, chat = '') {
             const parent = anchor.closest('.msg-convo-wrapper')
@@ -97,7 +101,7 @@ export const config: Record<string, siteConfig> = {
         buttonSize: 20,
         buttonStyle: 'width: 40px;height: 40px;display: flex;align-items: center;justify-content: center;',
         prompt: _t('commentPrompt'),
-        contextPrompt: _t('replyPrompt'),
+        contextPrompt: _t('commentPrompt'),
         cardContainer: () => document.body,
         targetInput: (anchor) => {
           const parent = anchor.closest('.feed-shared-update-v2')
@@ -125,9 +129,28 @@ export const config: Record<string, siteConfig> = {
         cardContainer: () => document.body,
         targetInput: (anchor) => anchor.closest('.c-basic_container__body').querySelector('.ql-editor'),
         context: (anchor) => {
-          const parent = anchor.closest('.p-workspace__primary_view_contents')
-          const context = `Message:\n${(parent?.querySelector('.c-message_kit__gutter') as HTMLElement)?.innerText}\n\nReply:`
-          return context
+          const DM = anchor.closest('.p-workspace__primary_view_contents')
+          const Reply = anchor.closest('.c-virtual_list__scroll_container')
+          const messages = (DM?.querySelector('.c-virtual_list__scroll_container') || Reply)?.querySelectorAll('.c-virtual_list__item')
+          const userName = document.querySelector('.p-ia__nav__user__button')?.getAttribute('aria-label')?.split(':')[1]
+
+          let context = ''
+
+          if (messages?.length) {
+            for (const message of messages) {
+              const sender = (message.querySelector('.c-message__sender_button') as HTMLElement)?.innerText
+              const messageText = (message.querySelector('.c-message_kit__blocks') as HTMLElement)?.innerText
+              context += `${sender ? '\n\n' + '[_yooz_@sender_split_]' + sender + ':\n' : ''}${messageText ? messageText + '\n' : ''}`
+            }
+          }
+
+          const contextList = context?.split('[_yooz_@sender_split_]')
+
+          // Keep last 2 messages
+          context = `${contextList?.slice(contextList.length - 5)?.join('')}\n\n${userName?.trim()}:`
+
+          // const context = `Message:\n${(parent?.querySelector('.c-virtual_list__scroll_container') as HTMLElement)?.innerText}\n\n${userName}:`
+          return context.trim()
         }
       }
     ]

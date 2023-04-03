@@ -74,10 +74,12 @@ Browser.runtime.onMessage.addListener(async (message) => {
   } else if (message.type === 'OPEN_YOOZ_CARD') {
     console.debug('OPEN_YOOZ_CARD')
     Browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-      Browser.tabs.sendMessage(tabs[0].id, {
+      Browser.tabs.sendMessage(tabs[0]?.id, {
         action: 'openYooz',
-      });
-    });
+      }).catch((error) => {
+        console.debug('OPEN_YOOZ_CARD_ERROR')
+      })
+    })
   }
 })
 

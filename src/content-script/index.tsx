@@ -9,6 +9,8 @@ import { getUserConfig } from '../config'
 
 async function run() {
 
+  Browser.runtime.sendMessage({ status: "contentScriptLoaded" });
+
   const userConfig = await getUserConfig()
 
   const siteRegex = new RegExp(Object.keys(config).join('|'))
@@ -56,7 +58,7 @@ async function run() {
           transform="matrix(0.77061411,-0.63730204,0,1,0,0)" />
       </g>
     </svg>`;
-    if(insertHook) {
+    if (insertHook) {
       insertHook(button, target)
     } else {
       target.appendChild(button);
@@ -81,8 +83,6 @@ async function run() {
 
   function checkAddedNode(addedNode: HTMLElement) {
     siteConfig.anchors.forEach(anchor => {
-      // TODO take ids into consideration
-      // console.log('addedNode', (addedNode as HTMLElement).classList)
       if (anchor.condition(addedNode as HTMLElement)) {
 
         // Render Yooz button
@@ -115,6 +115,8 @@ async function run() {
               context={context}
               position={{ x: boundingRect.left + 40, y: boundingRect.top }}
               prompt={context ? anchor.contextPrompt : anchor.prompt || ''}
+              beforeGenerateHook={() => anchor.beforeGenerateHook?.(addedNode)}
+              afterGenerateHook={() => anchor.afterGenerateHook?.(addedNode)}
               draggable
             />,
             placeholder,
@@ -179,7 +181,7 @@ async function run() {
 
         let hideButtonTimeout = setTimeout(() => {
           button.remove()
-        }, 5000)
+        }, 3000)
 
         button.addEventListener('mouseenter', () => {
           button.style.opacity = '1';
@@ -190,7 +192,7 @@ async function run() {
           button.style.opacity = '0.8';
           hideButtonTimeout = setTimeout(() => {
             button.remove()
-          }, 5000)
+          }, 3000)
         })
 
         button.addEventListener('click', function (event) {
@@ -279,13 +281,16 @@ async function run() {
         document.activeElement?.tagName?.toLowerCase() === 'textarea' ||
         !!document.activeElement?.closest('[contenteditable=true]')
 
-      let context, contextPrompt, prompt, cardContainer, targetInput = null
+      let context, contextPrompt, prompt, cardContainer, targetInput, beforeGenerateHook, afterGenerateHook = null
       if (siteConfig?.anchors) {
         siteConfig.anchors.forEach(anchor => {
           if (anchor.openCondition && anchor.openCondition(document.activeElement as HTMLElement)) {
             if (anchor?.context) context = anchor?.context(document.activeElement as HTMLElement)
             if (anchor.cardContainer) cardContainer = anchor.cardContainer(document.activeElement as HTMLElement)
             if (anchor.targetInput) targetInput = anchor.targetInput(document.activeElement as HTMLElement)
+            if (anchor.beforeGenerateHook) beforeGenerateHook = () => anchor.beforeGenerateHook?.(document.activeElement as HTMLElement)
+            if (anchor.afterGenerateHook) afterGenerateHook = () => anchor.afterGenerateHook?.(document.activeElement as HTMLElement)
+            // if (anchor.beforeGenerateHook) console.log('AE', beforeGenerateHook())
             contextPrompt = anchor?.contextPrompt
             prompt = anchor?.prompt
           }
@@ -322,6 +327,8 @@ async function run() {
           isFormInput={isFormInput}
           inputSelectionStart={inputSelectionStart}
           inputSelectionEnd={inputSelectionEnd}
+          beforeGenerateHook={beforeGenerateHook}
+          afterGenerateHook={afterGenerateHook}
         />,
         placeholder,
       )

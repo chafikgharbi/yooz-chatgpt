@@ -1,5 +1,6 @@
 import { GearIcon } from '@primer/octicons-react'
-import { useCallback } from 'react'
+import { useState } from 'preact/hooks'
+import { useCallback, useEffect } from 'react'
 // import useSWR from 'swr'
 import Browser from 'webextension-polyfill'
 import '../base.css'
@@ -8,17 +9,32 @@ import { _t } from '../utils'
 const isChrome = /chrome/i.test(navigator.userAgent)
 
 function App() {
-  // const hideShortcutsTipQuery = useSWR('hideShortcutsTip', async () => {
-  //   const { hideShortcutsTip } = await Browser.storage.local.get('hideShortcutsTip')
-  //   return !!hideShortcutsTip
-  // })
+  const [contentScriptLoaded, setContentScriptLoaded] = useState(false)
+
+  useEffect(() => {
+    Browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+      Browser.tabs.sendMessage(tabs[0]?.id, {
+        action: 'Test',
+      }).then(() => {
+        setContentScriptLoaded(true)
+      }).catch((error) => {
+        setContentScriptLoaded(false)
+      })
+    })
+  }, [])
+
+  const reloadTab = () => {
+    Browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+      Browser.tabs.reload(tabs[0]?.id);
+    })
+  }
 
   const openOptionsPage = useCallback(() => {
     Browser.runtime.sendMessage({ type: 'OPEN_OPTIONS_PAGE' })
   }, [])
 
   const openShortcutsPage = useCallback(() => {
-    Browser.storage.local.set({ hideShortcutsTip: true })
+    // Browser.storage.local.set({ hideShortcutsTip: true })
     Browser.tabs.create({ url: 'chrome://extensions/shortcuts' })
   }, [])
 
@@ -67,24 +83,22 @@ function App() {
           <GearIcon size={16} />
         </span>
       </div>
-      {/* {isChrome && !hideShortcutsTipQuery.isLoading && !hideShortcutsTipQuery.data && (
-        <p className="m-0 mb-2">
-          Tip:{' '}
-          <a onClick={openShortcutsPage} className="underline cursor-pointer">
-            setup shortcuts
-          </a>{' '}
-          for faster access.
-        </p>
-      )} */}
-      <a onClick={openYoozCard} className="text-sm block border-b-2 border-solid border-gray-200 px-4 py-4 hover:bg-gray-200 cursor-pointer">
-        {_t('popupOpenCard')}
+      <a onClick={contentScriptLoaded ? openYoozCard : reloadTab} className="text-sm block border-b-2 border-solid border-gray-200 px-4 py-4 hover:bg-gray-200 cursor-pointer">
+        {contentScriptLoaded ? _t('popupOpenCard') : <span>
+          <strong>Please reload the website you are on and then use the extension.</strong>
+          <small className='block mt-2'>{"Make sure you're on a regular website, not browser settings or Chrome extensions store (chrome.google.com)"}</small>
+        </span>}
       </a>
-      {isChrome && <a onClick={openShortcutsPage} className="text-sm border-b-2 border-solid border-gray-200 block px-4 py-4 hover:bg-gray-200 cursor-pointer">
-        {_t('popupShortcut')}
-      </a>}
-      <a onClick={openOptionsPage} className="text-sm block px-4 py-4 hover:bg-gray-200 cursor-pointer">
-        {_t('popupSettings')}
-      </a>
+      {contentScriptLoaded &&
+        <>
+          {isChrome && <a onClick={openShortcutsPage} className="text-sm border-b-2 border-solid border-gray-200 block px-4 py-4 hover:bg-gray-200 cursor-pointer">
+            {_t('popupShortcut')}
+          </a>}
+          <a onClick={openOptionsPage} className="text-sm block px-4 py-4 hover:bg-gray-200 cursor-pointer">
+            {_t('popupSettings')}
+          </a>
+        </>
+      }
     </div>
   )
 }

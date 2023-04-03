@@ -46,11 +46,11 @@ function OptionsPage() {
         </div>
         <div className="flex flex-row gap-3">
           <a
-            href="https://github.com/wong2/chat-gpt-google-extension/issues"
+            href="https://github.com/chafikgharbi/yooz-chatgpt/issues"
             target="_blank"
             rel="noreferrer"
           >
-            {_t('optFeedback')}
+            {_t('optIssue')}
           </a>
         </div>
       </nav>

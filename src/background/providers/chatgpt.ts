@@ -110,7 +110,7 @@ export class ChatGPTProvider implements Provider {
         parent_message_id: uuidv4(),
       }),
       onMessage(message: string) {
-        // console.debug('sse message', message) // TODO uncomment
+        console.debug('sse message', message)
         if (message === '[DONE]') {
           params.onEvent({ type: 'done' })
           // cleanup()

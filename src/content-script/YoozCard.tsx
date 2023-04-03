@@ -20,7 +20,9 @@ interface Props {
   position?: { x: number, y: number }
   prompt?: string
   contextPrompt?: string
-  draggable?: boolean
+  draggable?: boolean,
+  beforeGenerateHook?: () => void,
+  afterGenerateHook?: () => void
 }
 
 // Add useMemo useCallBack useLayoutEffect... for performance
@@ -32,6 +34,8 @@ function YoozCard({
   selectionRange,
   position,
   targetInput,
+  beforeGenerateHook,
+  afterGenerateHook,
   editableSelection,
   isFormInput,
   inputSelectionStart,
@@ -93,7 +97,6 @@ function YoozCard({
     let isScrollingUp = false
 
     const onScroll = () => {
-      console.log(contentRef.current.scrollTop, currentScrollTop)
       if (contentRef.current.scrollTop > currentScrollTop) {
         isScrollingUp = false
       }
@@ -112,14 +115,12 @@ function YoozCard({
     updatePromptHistory(_prompt)
     setLoading(true)
     let newPrompt = _prompt
-    // TODO get context from the input
-    if (isSelection && _context) newPrompt = `${newPrompt}: "${_context}"`
-    else if (isMessage && _context) newPrompt = `${newPrompt}:\n"${_context}"`
+    if ((isSelection || isMessage) && _context) newPrompt = `${_context}\n\n${newPrompt}`
+    // else if (isMessage && _context) newPrompt = `${newPrompt}:\n(${_context})`
     console.log("prompt", newPrompt)
     const port = Browser.runtime.connect()
     let response = ''
-    // TODO make it dependent
-    if (isMessage) document.querySelector('.msg-form__placeholder')?.classList?.remove("msg-form__placeholder");
+    beforeGenerateHook?.()
     const listener = (msg: any) => {
       if (msg.text) {
         response = msg.text
@@ -129,13 +130,11 @@ function YoozCard({
         }
         setGenerating(true)
       } else if (msg.error) {
-        // TODO maybe make error logger
         setError(msg.error)
         setGenerating(false)
       } else if (msg.event === 'DONE') {
         if (response && isSelection && editableSelection) replaceSelection(response)
-        // TODO make it dependent
-        if (isMessage) document.querySelector('.msg-form__send-button')?.removeAttribute('disabled')
+        afterGenerateHook?.()
         setDone(true)
         setGenerating(false)
       } else {
@@ -180,12 +179,6 @@ function YoozCard({
     bottomRef.current?.scrollIntoView()
   }, [error, retry])
 
-  // TODO useful to get user config
-  // useEffect(() => {
-  //   getUserConfig().then((config) => setConfig(config))
-  // }, [])
-
-  // TODO save last position after drag in the website
   return (
     <Draggable
       disabled={!draggable}
@@ -241,7 +234,6 @@ function YoozCard({
           </div>
         </div>
         <div className="yooz-card-content" ref={contentRef}>
-          {/* TODO: make types clickable */}
           <div className="yooz-types">
             <div
               className={`yooz-type ${!(isSelection || isMessage) && "yooz-type-active"}`}
@@ -269,10 +261,6 @@ function YoozCard({
             </div>
           </div>
           {(isSelection || isMessage) &&
-            // <div className="my-3">
-            //   <div className="text-md">The selected text</div>
-            //   <div className="text-md font-bold">{isSelection && selectionText && selectionText !== '' ? selectionText : ''}</div>
-            // </div>
             <div className="yooz-card-row">
               <label className="yooz-card-label">{_t(isSelection ? "selectionLabel" : "messageLabel")}</label>
               <textarea
@@ -290,7 +278,7 @@ function YoozCard({
               <label className="yooz-card-label yooz-prompt-label">
                 <div>{_t(isSelection ? "selectionPromptLabel" : "writingPromptLabel")}</div>
                 <div className={`yooz-history-button ${showHistory ? 'yooz-active' : ''}`} onClick={() => setShowHistory(!showHistory)}>
-                  History
+                  {_t('history')}
                 </div>
               </label>
               <textarea
@@ -305,9 +293,8 @@ function YoozCard({
             </form>
           </div>
           {(error === 'UNAUTHORIZED' || error === 'CLOUDFLARE') ?
-            <div className="yooz-notif yooz-error">
-              {/* // TODO translate */}
-              Please login and pass Cloudflare check at{' '}
+            <a href="https://chat.openai.com" className="yooz-notif yooz-error">
+              {_t('loginMessage')}{' '}
               <a href="https://chat.openai.com" target="_blank" rel="noreferrer">
                 chat.openai.com
               </a>
@@ -316,7 +303,7 @@ function YoozCard({
                   if (isBraveBrowser()) {
                     return (
                       null
-                      // TODO
+                      // WIP Brave
                       // <span className="block mt-2">
                       //   Still not working? Follow{' '}
                       //   <a href="https://github.com/wong2/chat-gpt-google-extension#troubleshooting">
@@ -327,26 +314,22 @@ function YoozCard({
                   } else {
                     return (
                       <span className="italic block mt-2 text-xs">
-                        OpenAI requires passing a security check every once in a while. If this keeps
-                        happening, change AI provider to OpenAI API in the extension options.
+                        {_t('loginMessageDesc')}
                       </span>
                     )
                   }
                 })()}
-            </div>
+            </a>
             : answer?.text ?
-              <div
-                // TODO remove all tailwind
-                className="my-3">
+              <div style={{ marginTop: "10px" }}>
                 <ReactMarkdown rehypePlugins={[[rehypeHighlight, { detect: true }]]}>
                   {answer.text}
                 </ReactMarkdown>
                 {done && showTip && (
                   <p className="italic mt-2">
-                    Enjoy this extension? Give us a 5-star rating at{' '}
+                    {_t('ratingMessage')}{' '}
                     <a
-                      // TODO: link to our page that redirect chrome extension (remove the current link)
-                      href="https://chatgpt4google.com/chrome?utm_source=rating_tip"
+                      href="https://chrome.google.com/webstore/detail/yooz-chatgpt/hhijegfgodpbaaalajoknihbgakjgdob"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -357,7 +340,7 @@ function YoozCard({
               </div>
               : (showHistory && promptHistory.length) ?
                 <>
-                  <div className='yooz-history-label'>History</div>
+                  <div className='yooz-history-label'>{_t('history')}</div>
                   {promptHistory.map((prompt, index) => (
                     <div key={index}>
                       <div className="yooz-history-item" onClick={() => {
@@ -371,6 +354,14 @@ function YoozCard({
           <div ref={bottomRef} />
         </div>
         <div className="yooz-card-footer">
+          <a
+            className="yooz-issue"
+            href="https://github.com/chafikgharbi/yooz-chatgpt/issues"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {_t('optIssue')}
+          </a>
           <button className="yooz-generate-button" onClick={(loading || generating) ? null : write}>
             {loading ? 'Loading...' : generating ? 'Generating...' : _t('submitButtonText')}
           </button>

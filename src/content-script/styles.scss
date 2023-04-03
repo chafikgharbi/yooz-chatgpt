@@ -7,8 +7,6 @@
 
 .yooz-placeholder {
   position: static;
-  // TODO add it to specific places, maybe you need to select some text in the future
-  // user-select: none;
 }
 
 .yooz-button {
@@ -103,8 +101,15 @@
 .yooz-card-footer {
   padding: 14px 18px 14px 18px;
   display: flex;
-  justify-content: end;
+  justify-content: space-between;
+  align-items: center;
   background: #f2f2f2;
+}
+
+.yooz-issue {
+  font-size: 11px !important;
+  font-weight: bold !important;
+  color: #777 !important;
 }
 
 .yooz-card-row {
@@ -234,7 +239,12 @@
 }
 
 .yooz-notif {
+  display: block;
   padding: 10px;
   border-radius: 4px;
   background-color: rgba(255, 118, 117, 0.1);
+}
+
+.yooz-notif > a {
+  font-weight: bold !important;
 }
