@@ -36,7 +36,7 @@
     "message": "Write a message..."
   },
   "replyPrompt": {
-    "message": "Write a reply..."
+    "message": "Reply..."
   },
   "writingPrompt": {
     "message": "Write an article..."
@@ -59,6 +59,18 @@
   "submitButtonText": {
     "message": "Generate"
   },
+  "loginMessage": {
+    "message": "Please login and pass Cloudflare check at"
+  },
+  "loginMessageDesc": {
+    "message": "OpenAI requires passing a security check every once in a while. If this keeps happening, change AI provider to OpenAI API in the extension options."
+  },
+  "ratingMessage": {
+    "message": "Enjoy this extension? Give us a 5-star rating at"
+  },
+  "history": {
+    "message": "History"
+  },
   "popupOpenCard": {
     "message": "Open Yooz ChatGPT"
   },
@@ -71,8 +83,8 @@
   "options": {
     "message": "Options"
   },
-  "optFeedback": {
-    "message": "Feedback"
+  "optIssue": {
+    "message": "Issue or feedback"
   },
   "optProvider": {
     "message": "AI Provider"
