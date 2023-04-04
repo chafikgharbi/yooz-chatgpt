@@ -67,7 +67,9 @@ export class ChatGPTProvider implements Provider {
 
       const gpt4Models = models.filter((model) => model.slug.includes('gpt-4'))
 
-      return userConfig.enableCLM && gpt4Models.length ? gpt4Models[gpt4Models.length - 1].slug : models[0].slug
+      return userConfig.enableCLM && gpt4Models.length
+        ? gpt4Models[gpt4Models.length - 1].slug
+        : models[0].slug
     } catch (err) {
       console.error(err)
       return 'text-davinci-002-render'
@@ -113,7 +115,7 @@ export class ChatGPTProvider implements Provider {
         console.debug('sse message', message)
         if (message === '[DONE]') {
           params.onEvent({ type: 'done' })
-          // cleanup()
+          cleanup()
           return
         }
         let data
