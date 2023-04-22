@@ -2,7 +2,7 @@
   "name": "__MSG_appName__",
   "description": "__MSG_appDesc__",
   "default_locale": "en",
-  "version": "1.18.0",
+  "version": "1.18.1",
   "manifest_version": 3,
   "icons": {
     "16": "logo.png",
@@ -15,9 +15,7 @@
   ],
   "permissions": [
     "storage",
-    "contextMenus",
-    "tabs",
-    "commands"
+    "contextMenus"
   ],
   "background": {
     "service_worker": "background.js"
@@ -48,7 +46,7 @@
         "default": "Ctrl+Shift+Y",
         "mac": "Command+Shift+Y"
       },
-      "description": "Open Yooz"
+      "description": "Open ChatGPT Copilot"
     }
   }
 }

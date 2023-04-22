@@ -1,12 +1,12 @@
 {
   "appName": {
-    "message": "Yooz ChatGPT"
+    "message": "ChatGPT Copilot"
   },
   "appDesc": {
     "message": "Use ChatGPT while browsing the web"
   },
   "openYooz": {
-    "message": "Yooz ChatGPT"
+    "message": "ChatGPT Copilot"
   },
   "tabNew": {
     "message": "New writing"
@@ -72,7 +72,7 @@
     "message": "History"
   },
   "popupOpenCard": {
-    "message": "Open Yooz ChatGPT"
+    "message": "Open ChatGPT Copilot"
   },
   "popupShortcut": {
     "message": "Setup keyboard shortcut"
@@ -120,10 +120,10 @@
     "message": "Misc"
   },
   "optSelectionButton": {
-    "message": "Show Yooz button after text selection"
+    "message": "Show button after text selection"
   },
   "optSRButton": {
-    "message": "Show Yooz button for smart reply"
+    "message": "Show button for smart reply"
   },
   "optSRDesc": {
     "message": "Available only in Linkedin, Gmail, Outlook and Slack (we will add more websites soon)"
