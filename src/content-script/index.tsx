@@ -1,15 +1,14 @@
 import { render } from 'preact'
 import Browser from 'webextension-polyfill'
 import '../base.css'
+import { getUserConfig } from '../config'
 import { config } from './site-configs'
 import './styles.scss'
 import { removeElementsByClass } from './utils'
 import YoozCard from './YoozCard'
-import { getUserConfig } from '../config'
 
 async function run() {
-
-  Browser.runtime.sendMessage({ status: "contentScriptLoaded" });
+  Browser.runtime.sendMessage({ status: 'contentScriptLoaded' })
 
   const userConfig = await getUserConfig()
 
@@ -18,10 +17,16 @@ async function run() {
   const siteName = siteMatches ? siteMatches[0] : null
   const siteConfig = siteName ? config[siteName] : null
 
-  const body = document.body;
+  const body = document.body
 
-  const renderYoozButton = (target, insertHook = null, selection: boolean, containerStyle = '', size = 25) => {
-    const button = document.createElement('div');
+  const renderYoozButton = (
+    target,
+    insertHook = null,
+    selection: boolean,
+    containerStyle = '',
+    size = 25,
+  ) => {
+    const button = document.createElement('div')
     button.className = 'yooz-button'
     button.classList.add(selection ? 'yooz-button-selection' : 'yooz-button-tool')
     button.setAttribute('style', `width:${size}px;height:${size}px;${containerStyle}`)
@@ -57,11 +62,11 @@ async function run() {
           y="30.983917"
           transform="matrix(0.77061411,-0.63730204,0,1,0,0)" />
       </g>
-    </svg>`;
+    </svg>`
     if (insertHook) {
       insertHook(button, target)
     } else {
-      target.appendChild(button);
+      target.appendChild(button)
     }
     return button
   }
@@ -80,72 +85,85 @@ async function run() {
     return yoozPlaceholder
   }
 
+  function hookButton(anchor, node: HTMLElement) {
+    // Render Yooz button
+    const button = renderYoozButton(
+      node,
+      anchor.insertButtonHook,
+      false,
+      anchor.buttonStyle || '',
+      anchor.buttonSize || 25,
+    )
 
-  function checkAddedNode(addedNode: HTMLElement) {
-    siteConfig.anchors.forEach(anchor => {
+    button.addEventListener('click', function (event) {
+      event.stopPropagation()
+      event.preventDefault()
+
+      // Remove previous placeholder and add new
+      const placeholder = renderPlaceholder(anchor.cardContainer(node))
+
+      /* WIP: select a message */
+      const context = anchor.context ? anchor.context(node, button) : null
+
+      // Button pos
+      const boundingRect = button.getBoundingClientRect()
+
+      // Render Yooz card
+      render(
+        <YoozCard
+          targetInput={anchor.targetInput(node as HTMLElement)}
+          isMessage={!!context}
+          context={context}
+          contextPreview={anchor.contextPreview?.(node)}
+          position={{ x: boundingRect.left + 40, y: boundingRect.top }}
+          prompt={context ? anchor.contextPrompt : anchor.prompt || ''}
+          beforeGenerateHook={() => anchor.beforeGenerateHook?.(node)}
+          afterGenerateHook={() => anchor.afterGenerateHook?.(node)}
+          draggable
+        />,
+        placeholder,
+      )
+    })
+  }
+
+  function checkNode(addedNode: HTMLElement) {
+    siteConfig.anchors.forEach((anchor) => {
       if (anchor.condition(addedNode as HTMLElement)) {
+        // Added for github
+        if (anchor.customNodes?.(addedNode)) {
+          for (const node of anchor.customNodes(addedNode)) {
+            hookButton(anchor, node)
+          }
+          return
+        }
 
-        // Render Yooz button
-        const button = renderYoozButton(
-          addedNode,
-          anchor.insertButtonHook,
-          false,
-          anchor.buttonStyle || '',
-          anchor.buttonSize || 25
-        )
-
-        button.addEventListener('click', function (event) {
-          event.stopPropagation()
-          event.preventDefault()
-
-          // Remove previous placeholder and add new
-          const placeholder = renderPlaceholder(anchor.cardContainer(addedNode))
-
-          /* WIP: select a message */
-          const context = anchor.context ? anchor.context(addedNode) : null
-
-          // Button pos
-          const boundingRect = button.getBoundingClientRect()
-
-          // Render Yooz card
-          render(
-            <YoozCard
-              targetInput={anchor.targetInput(addedNode as HTMLElement)}
-              isMessage={!!context}
-              context={context}
-              position={{ x: boundingRect.left + 40, y: boundingRect.top }}
-              prompt={context ? anchor.contextPrompt : anchor.prompt || ''}
-              beforeGenerateHook={() => anchor.beforeGenerateHook?.(addedNode)}
-              afterGenerateHook={() => anchor.afterGenerateHook?.(addedNode)}
-              draggable
-            />,
-            placeholder,
-          )
-        });
+        hookButton(anchor, addedNode)
       }
     })
   }
 
   if (userConfig.SRButton) {
-    const checkedElements = new Set()
+    const checkedNodes = new Set()
 
     if (siteConfig?.anchors?.length) {
       const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
           if (mutation.type === 'childList') {
             for (const addedNode of mutation.addedNodes) {
-              if (checkedElements.has(addedNode)) continue
-              checkAddedNode(addedNode as HTMLElement)
+              if (checkedNodes.has(addedNode)) continue
+              checkNode(addedNode as HTMLElement)
 
               // Check all descendant elements of the added node
-              const descendantElements = (addedNode as HTMLElement)?.querySelectorAll ? (addedNode as HTMLElement).querySelectorAll("*") : []
+              const descendantElements = (addedNode as HTMLElement)?.querySelectorAll
+                ? (addedNode as HTMLElement).querySelectorAll('*')
+                : []
 
               for (const descendantElement of descendantElements) {
-                if (checkedElements.has(descendantElement)) continue
-                checkAddedNode(descendantElement as HTMLElement)
-                checkedElements.add(descendantElement)
+                if (checkedNodes.has(descendantElement)) continue
+                checkNode(descendantElement as HTMLElement)
+                checkedNodes.add(descendantElement)
               }
-              checkedElements.add(addedNode)
+              checkedNodes.add(addedNode)
             }
           }
         }
@@ -155,48 +173,55 @@ async function run() {
       observer.observe(body, {
         attributes: false,
         childList: true,
-        subtree: true
-      });
+        subtree: true,
+      })
     }
   }
 
   // Render components after text selection
   if (userConfig.selectionButton) {
     document.addEventListener('mouseup', (e) => {
-      const selectedText = window.getSelection().toString();
-      const selectionNoSpace = selectedText.replace(/(\r\n|\n|\r|\s)/gm, "")
+      const selectedText = window.getSelection().toString()
+      const selectionNoSpace = selectedText.replace(/(\r\n|\n|\r|\s)/gm, '')
       if (selectedText && selectionNoSpace !== '') {
+        const selectionRange = window.getSelection().getRangeAt(0)
+        const boundingRect = selectionRange.getBoundingClientRect()
 
-        const selectionRange = window.getSelection().getRangeAt(0);
-        const boundingRect = selectionRange.getBoundingClientRect();
-
-        const button = renderYoozButton(body, null, true, `
+        const button = renderYoozButton(
+          body,
+          null,
+          true,
+          `
       position: absolute;
-      opacity: 0.8;
-      top: ${boundingRect.top > 50 ?
-            boundingRect.top + window.scrollY - 27 + 'px' :
-            boundingRect.top + boundingRect.height + window.scrollY + 5 + 'px'};
-      left: ${(boundingRect.left + boundingRect.width / 2 + window.scrollX + 5) + 'px'}
-    `, 22)
+      opacity: 0.6;
+      top: ${
+        boundingRect.top > 50
+          ? boundingRect.top + window.scrollY - 27 + 'px'
+          : boundingRect.top + boundingRect.height + window.scrollY + 5 + 'px'
+      };
+      left: ${boundingRect.left + boundingRect.width / 2 + window.scrollX + 5 + 'px'}
+    `,
+          22,
+        )
 
         let hideButtonTimeout = setTimeout(() => {
           button.remove()
         }, 3000)
 
         button.addEventListener('mouseenter', () => {
-          button.style.opacity = '1';
+          button.style.opacity = '1'
           clearTimeout(hideButtonTimeout)
         })
 
         button.addEventListener('mouseleave', () => {
-          button.style.opacity = '0.8';
+          button.style.opacity = '0.8'
           hideButtonTimeout = setTimeout(() => {
             button.remove()
           }, 3000)
         })
 
         button.addEventListener('click', function (event) {
-          event.preventDefault();
+          event.preventDefault()
 
           const placeholder = renderPlaceholder(body)
 
@@ -207,19 +232,20 @@ async function run() {
           // const editableSelection = selectionRange.closest()
 
           let selectionParent = null
-          selectionParent = selectionRange.commonAncestorContainer;
+          selectionParent = selectionRange.commonAncestorContainer
           if (selectionParent.nodeType != 1) {
-            selectionParent = selectionParent.parentNode;
+            selectionParent = selectionParent.parentNode
           }
 
           render(
             <YoozCard
               position={{
-                x: (boundingRect.left + boundingRect.width + 10),
-                y: boundingRect.top + boundingRect.height + 10
+                x: boundingRect.left + boundingRect.width + 10,
+                y: boundingRect.top + boundingRect.height + 10,
               }}
               context={selectionText}
-              selectionRange={selectionRange} key={Date.now()}
+              selectionRange={selectionRange}
+              key={Date.now()}
               isSelection
               draggable
               editableSelection={
@@ -230,20 +256,22 @@ async function run() {
             />,
             placeholder,
           )
-        });
+        })
       }
-    });
+    })
   }
 
   // Hide buttons when click outside
   document.addEventListener('mousedown', (event) => {
     const button = document.querySelector('.yooz-button-selection')
-    if (button &&
+    if (
+      button &&
       !(event.target as HTMLElement)?.classList.contains('yooz-button-selection') &&
-      !(event.target as HTMLElement)?.closest('.yooz-button-selection')) {
+      !(event.target as HTMLElement)?.closest('.yooz-button-selection')
+    ) {
       removeElementsByClass('yooz-button-selection')
     }
-  });
+  })
 
   let lastMouseX = 0
   let lastMouseY = 0
@@ -251,45 +279,59 @@ async function run() {
   document.addEventListener('mousedown', (event) => {
     lastMouseX = event.clientX
     lastMouseY = event.clientY
-  });
+  })
 
   Browser.runtime.onMessage.addListener(async (request) => {
     if (request.action == 'openYooz') {
-      const selectedText = window.getSelection().toString();
-      const selectionNoSpace = selectedText.replace(/(\r\n|\n|\r|\s)/gm, "")
+      const selectedText = window.getSelection().toString()
+      const selectionNoSpace = selectedText.replace(/(\r\n|\n|\r|\s)/gm, '')
       const isSelection = selectedText && selectionNoSpace !== ''
 
       let position = { x: window.innerWidth / 2 - 230, y: window.innerHeight / 2 }
       if (lastMouseX && lastMouseY) {
         position = {
           x: lastMouseX,
-          y: lastMouseY
+          y: lastMouseY,
         }
       }
 
-      const selectionRange = window.getSelection().rangeCount > 0 ? window.getSelection().getRangeAt(0) : null;
-      const boundingRect = selectionRange ? selectionRange.getBoundingClientRect() : undefined;
+      const selectionRange =
+        window.getSelection().rangeCount > 0 ? window.getSelection().getRangeAt(0) : null
+      const boundingRect = selectionRange ? selectionRange.getBoundingClientRect() : undefined
       if (boundingRect?.left || boundingRect?.top) {
         position = {
-          x: (boundingRect.left + boundingRect.width + 10),
-          y: boundingRect.top + boundingRect.height + 10
+          x: boundingRect.left + boundingRect.width + 10,
+          y: boundingRect.top + boundingRect.height + 10,
         }
       }
 
-      const editableElement = (document.activeElement as HTMLElement)?.isContentEditable ||
+      const editableElement =
+        (document.activeElement as HTMLElement)?.isContentEditable ||
         document.activeElement?.tagName?.toLowerCase() === 'input' ||
         document.activeElement?.tagName?.toLowerCase() === 'textarea' ||
         !!document.activeElement?.closest('[contenteditable=true]')
 
-      let context, contextPrompt, prompt, cardContainer, targetInput, beforeGenerateHook, afterGenerateHook = null
+      let context,
+        contextPrompt,
+        prompt,
+        cardContainer,
+        targetInput,
+        beforeGenerateHook,
+        afterGenerateHook = null
       if (siteConfig?.anchors) {
-        siteConfig.anchors.forEach(anchor => {
+        siteConfig.anchors.forEach((anchor) => {
           if (anchor.openCondition && anchor.openCondition(document.activeElement as HTMLElement)) {
             if (anchor?.context) context = anchor?.context(document.activeElement as HTMLElement)
-            if (anchor.cardContainer) cardContainer = anchor.cardContainer(document.activeElement as HTMLElement)
-            if (anchor.targetInput) targetInput = anchor.targetInput(document.activeElement as HTMLElement)
-            if (anchor.beforeGenerateHook) beforeGenerateHook = () => anchor.beforeGenerateHook?.(document.activeElement as HTMLElement)
-            if (anchor.afterGenerateHook) afterGenerateHook = () => anchor.afterGenerateHook?.(document.activeElement as HTMLElement)
+            if (anchor.cardContainer)
+              cardContainer = anchor.cardContainer(document.activeElement as HTMLElement)
+            if (anchor.targetInput)
+              targetInput = anchor.targetInput(document.activeElement as HTMLElement)
+            if (anchor.beforeGenerateHook)
+              beforeGenerateHook = () =>
+                anchor.beforeGenerateHook?.(document.activeElement as HTMLElement)
+            if (anchor.afterGenerateHook)
+              afterGenerateHook = () =>
+                anchor.afterGenerateHook?.(document.activeElement as HTMLElement)
             // if (anchor.beforeGenerateHook) console.log('AE', beforeGenerateHook())
             contextPrompt = anchor?.contextPrompt
             prompt = anchor?.prompt
@@ -301,7 +343,9 @@ async function run() {
         targetInput = editableElement ? document.activeElement : null
       }
 
-      const isFormInput = targetInput?.tagName?.toLowerCase() === 'input' || targetInput?.tagName?.toLowerCase() === 'textarea'
+      const isFormInput =
+        targetInput?.tagName?.toLowerCase() === 'input' ||
+        targetInput?.tagName?.toLowerCase() === 'textarea'
       let inputSelectionStart = undefined
       let inputSelectionEnd = undefined
       if (isSelection && isFormInput) {
@@ -333,7 +377,7 @@ async function run() {
         placeholder,
       )
     }
-  });
+  })
 }
 
 run()

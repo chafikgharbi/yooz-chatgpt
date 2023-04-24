@@ -1,20 +1,23 @@
-import { _t } from "../utils"
+import { _t } from '../utils'
 
 export interface siteConfig {
   anchors: {
     // TODO maybe rename to buttonCondition
-    condition: (node: HTMLElement) => boolean
+    condition: (node: HTMLElement) => boolean // TODO change to hook
     openCondition?: (node: HTMLElement) => boolean
-    prompt?: string,
+    prompt?: string
     contextPrompt?: string
-    context?: (anchor: HTMLElement) => string
+    context?: (anchor: HTMLElement, button?: HTMLElement) => string
     targetInput?: (anchor: HTMLElement) => HTMLElement
     beforeGenerateHook?: (anchor: HTMLElement) => void
     afterGenerateHook?: (anchor: HTMLElement) => void
     insertButtonHook?: (button: HTMLElement, target: HTMLElement) => void
     cardContainer?: (anchor: HTMLElement) => HTMLElement
-    buttonSize?: number,
+    buttonSize?: number
     buttonStyle?: string
+    // For github files
+    customNodes?: (node: HTMLElement) => NodeListOf<HTMLElement>
+    contextPreview?: (anchor: HTMLElement) => HTMLElement
   }[]
 }
 
@@ -26,32 +29,38 @@ export const config: Record<string, siteConfig> = {
         condition: (node) => node?.classList?.contains('btC'),
         openCondition: (node) => !!node.closest('.editable'),
         buttonSize: 20,
-        buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        buttonStyle:
+          'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
         insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
         cardContainer: () => document.body,
         prompt: _t('emailPrompt'),
         context: (anchor) => {
           const parent = anchor.closest('.G3.G2')
           if (!parent) return ''
-          const context = `Email:\n${(parent.querySelector('.a3s.aiL') as HTMLElement).innerText}\n\nReply:`
+          const context = `Email:\n${
+            (parent.querySelector('.a3s.aiL') as HTMLElement).innerText
+          }\n\nReply:`
           return context
         },
         contextPrompt: _t('replyPrompt'),
-        targetInput: (anchor) => anchor.closest('.iN').querySelector('.editable')
-      }
-    ]
+        targetInput: (anchor) => anchor.closest('.iN').querySelector('.editable'),
+      },
+    ],
   },
   linkedin: {
     anchors: [
       // Linkedin post
       {
-        condition: (node) => node?.classList?.contains('share-creation-state__additional-toolbar') ||
-          node?.classList?.contains('share-creation-state__additional-toolbar-with-redesigned-detours'),
+        condition: (node) =>
+          node?.classList?.contains('share-creation-state__additional-toolbar') ||
+          node?.classList?.contains(
+            'share-creation-state__additional-toolbar-with-redesigned-detours',
+          ),
         openCondition: (node) => !!node.closest('.share-creation-state__text-editor'),
         insertButtonHook: (button, target) => target.appendChild(button),
         prompt: _t('linkedinPostPrompt'),
         cardContainer: (anchor = null) => anchor.closest('.share-box'),
-        targetInput: (anchor) => anchor.closest('.artdeco-modal').querySelector('.ql-editor')
+        targetInput: (anchor) => anchor.closest('.artdeco-modal').querySelector('.ql-editor'),
       },
       // Linkedin message
       {
@@ -62,23 +71,46 @@ export const config: Record<string, siteConfig> = {
         buttonSize: 20,
         prompt: _t('messagePrompt'),
         contextPrompt: _t('replyPrompt'),
-        targetInput: (anchor) => anchor.closest('.msg-convo-wrapper').querySelector('.msg-form__contenteditable'),
-        beforeGenerateHook: (anchor) => anchor.closest('.msg-convo-wrapper')?.querySelector('.msg-form__placeholder')?.classList?.remove("msg-form__placeholder"),
-        afterGenerateHook: (anchor) => anchor.closest('.msg-convo-wrapper')?.querySelector('.msg-form__send-button')?.removeAttribute('disabled'),
+        targetInput: (anchor) =>
+          anchor.closest('.msg-convo-wrapper').querySelector('.msg-form__contenteditable'),
+        beforeGenerateHook: (anchor) =>
+          anchor
+            .closest('.msg-convo-wrapper')
+            ?.querySelector('.msg-form__placeholder')
+            ?.classList?.remove('msg-form__placeholder'),
+        afterGenerateHook: (anchor) =>
+          anchor
+            .closest('.msg-convo-wrapper')
+            ?.querySelector('.msg-form__send-button')
+            ?.removeAttribute('disabled'),
         context: (anchor) => {
           function getMessages(anchor, lastChecked = null, i = 0, chat = '') {
             const parent = anchor.closest('.msg-convo-wrapper')
-            const lastElement = lastChecked ? lastChecked.previousElementSibling : parent.querySelector(".msg-s-message-list-content")?.lastElementChild
-            const currentUserName = document.querySelector('.msg-overlay-list-bubble').querySelector('.presence-entity__image').getAttribute('alt')
+            const lastElement = lastChecked
+              ? lastChecked.previousElementSibling
+              : parent.querySelector('.msg-s-message-list-content')?.lastElementChild
+            const currentUserName = document
+              .querySelector('.msg-overlay-list-bubble')
+              .querySelector('.presence-entity__image')
+              .getAttribute('alt')
             if (!lastElement) return chat ? `${chat}\n\n${currentUserName}:` : ''
             const msgUserName = lastElement.querySelector('.msg-s-message-group__name')?.innerText
             const msgText = lastElement.querySelector('.msg-s-event-listitem__body')?.innerText
             if (msgUserName) {
               if (msgText) {
-                if (i > 5) return `${msgUserName}:\n${msgText}\n\n` + (chat ? `${chat}\n${currentUserName}:` : '') // return last 5 messages
-                return getMessages(anchor, lastElement, ++i, `${msgUserName}:\n${msgText}\n\n${chat}`)
+                if (i > 5)
+                  return (
+                    `${msgUserName}:\n${msgText}\n\n` + (chat ? `${chat}\n${currentUserName}:` : '')
+                  ) // return last 5 messages
+                return getMessages(
+                  anchor,
+                  lastElement,
+                  ++i,
+                  `${msgUserName}:\n${msgText}\n\n${chat}`,
+                )
               } else {
-                if (i > 5) return `${msgUserName}:\n\n` + (chat ? `${chat}\n${currentUserName}:` : '') // return last 5 messages
+                if (i > 5)
+                  return `${msgUserName}:\n\n` + (chat ? `${chat}\n${currentUserName}:` : '') // return last 5 messages
                 return getMessages(anchor, lastElement, ++i, `${msgUserName}:\n\n${chat}`)
               }
             } else {
@@ -91,7 +123,7 @@ export const config: Record<string, siteConfig> = {
             }
           }
           return getMessages(anchor)
-        }
+        },
       },
       // Linkedin comment
       {
@@ -99,7 +131,8 @@ export const config: Record<string, siteConfig> = {
         openCondition: (node) => !!node.closest('.comments-comment-box-comment__text-editor'),
         insertButtonHook: (button, target) => target.querySelector('.mlA').appendChild(button),
         buttonSize: 20,
-        buttonStyle: 'width: 40px;height: 40px;display: flex;align-items: center;justify-content: center;',
+        buttonStyle:
+          'width: 40px;height: 40px;display: flex;align-items: center;justify-content: center;',
         prompt: _t('commentPrompt'),
         contextPrompt: _t('commentPrompt'),
         cardContainer: () => document.body,
@@ -110,12 +143,18 @@ export const config: Record<string, siteConfig> = {
         },
         context: (anchor) => {
           const parent = anchor.closest('.feed-shared-update-v2')
-          const context = `Post:\n${(parent.querySelector('.update-components-text') as HTMLElement).innerText}`
+          const context = `Post:\n${
+            (parent.querySelector('.update-components-text') as HTMLElement).innerText
+          }`
           const parentComment = anchor.closest('.comments-comment-item')
-          return parentComment ? `${context}\n\nComment:\n${(parentComment.querySelector('.update-components-text') as HTMLElement).innerText}\n\nReply:` : `${context}\n\nReply:`
-        }
-      }
-    ]
+          return parentComment
+            ? `${context}\n\nComment:\n${
+                (parentComment.querySelector('.update-components-text') as HTMLElement).innerText
+              }\n\nReply:`
+            : `${context}\n\nReply:`
+        },
+      },
+    ],
   },
   slack: {
     anchors: [
@@ -123,68 +162,95 @@ export const config: Record<string, siteConfig> = {
       {
         condition: (node) => node?.classList?.contains('c-texty_buttons'),
         buttonSize: 20,
-        buttonStyle: 'width: 28px;height: 28px;margin: 2px;display: flex;align-items: center;justify-content: center;',
+        buttonStyle:
+          'width: 28px;height: 28px;margin: 2px;display: flex;align-items: center;justify-content: center;',
         prompt: _t('messagePrompt'),
         contextPrompt: _t('replyPrompt'),
         cardContainer: () => document.body,
-        targetInput: (anchor) => anchor.closest('.c-basic_container__body').querySelector('.ql-editor'),
+        targetInput: (anchor) =>
+          anchor.closest('.c-basic_container__body').querySelector('.ql-editor'),
         context: (anchor) => {
           const DM = anchor.closest('.p-workspace__primary_view_contents')
           const Reply = anchor.closest('.c-virtual_list__scroll_container')
-          const messages = (DM?.querySelector('.c-virtual_list__scroll_container') || Reply)?.querySelectorAll('.c-virtual_list__item')
-          const userName = document.querySelector('.p-ia__nav__user__button')?.getAttribute('aria-label')?.split(':')[1]
+          const messages = (
+            DM?.querySelector('.c-virtual_list__scroll_container') || Reply
+          )?.querySelectorAll('.c-virtual_list__item')
+          const userName = document
+            .querySelector('.p-ia__nav__user__button')
+            ?.getAttribute('aria-label')
+            ?.split(':')[1]
 
           let context = ''
 
           if (messages?.length) {
             for (const message of messages) {
-              const sender = (message.querySelector('.c-message__sender_button') as HTMLElement)?.innerText
-              const messageText = (message.querySelector('.c-message_kit__blocks') as HTMLElement)?.innerText
-              context += `${sender ? '\n\n' + '[_yooz_@sender_split_]' + sender + ':\n' : ''}${messageText ? messageText + '\n' : ''}`
+              const sender = (message.querySelector('.c-message__sender_button') as HTMLElement)
+                ?.innerText
+              const messageText = (message.querySelector('.c-message_kit__blocks') as HTMLElement)
+                ?.innerText
+              context += `${sender ? '\n\n' + '[_yooz_@sender_split_]' + sender + ':\n' : ''}${
+                messageText ? messageText + '\n' : ''
+              }`
             }
           }
 
           const contextList = context?.split('[_yooz_@sender_split_]')
 
           // Keep last 2 messages
-          context = `${contextList?.slice(contextList.length - 5)?.join('')}\n\n${userName?.trim()}:`
+          context = `${contextList
+            ?.slice(contextList.length - 5)
+            ?.join('')}\n\n${userName?.trim()}:`
 
           // const context = `Message:\n${(parent?.querySelector('.c-virtual_list__scroll_container') as HTMLElement)?.innerText}\n\n${userName}:`
           return context.trim()
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   live: {
     anchors: [
       // Outlook
       {
-        condition: (node) => node?.classList?.contains('OTADH') || node?.classList?.contains('vBoqL'),
+        condition: (node) =>
+          node?.classList?.contains('OTADH') || node?.classList?.contains('vBoqL'),
         openCondition: (node) => !!node.closest('.dFCbN'),
         buttonSize: 25,
-        buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        buttonStyle:
+          'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
         // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
         cardContainer: () => document.body,
         prompt: _t('emailPrompt'),
         context: (anchor) => {
           const parent = anchor.closest('.aVla3')
           if (!parent) return ''
-          const context = `Email:\n${(parent.querySelector('.XbIp4') as HTMLElement).innerText}\n\nReply:`
+          const context = `Email:\n${
+            (parent.querySelector('.XbIp4') as HTMLElement).innerText
+          }\n\nReply:`
           return context
         },
         contextPrompt: _t('replyPrompt'),
-        targetInput: (anchor) => anchor.closest('.dMm6A').querySelector('.dFCbN')
-      }
-    ]
+        targetInput: (anchor) => anchor.closest('.dMm6A').querySelector('.dFCbN'),
+      },
+    ],
   },
   github: {
     anchors: [
-      // Github review
+      // Github file
       {
-        condition: (node) => node?.classList?.contains('toolbar-commenting'),
-        openCondition: (node) => !!node.closest('.comment-form-textarea'),
-        buttonSize: 25,
-        buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        condition: (node) => node?.classList?.contains('branch'),
+        customNodes: (node) =>
+          node?.closest('.repository-content').querySelectorAll('.file-header'),
+        openCondition: (node) => !!node.closest('.file-header'),
+        // insertButtonHook: (button, target) => {
+        //   const filesHeader = target.closest('.repository-content').querySelectorAll('.file-header')
+        //   // append header.appendChild(button) to each files-header
+        //   for (const header of filesHeader) {
+        //     header.appendChild(button.cloneNode(true))
+        //   }
+        // },
+        buttonSize: 20,
+        buttonStyle:
+          'width: 30px;height: 20px;display: flex;align-items: center;justify-content: center;',
         // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
         cardContainer: () => document.body,
         context: (anchor) => {
@@ -195,7 +261,7 @@ export const config: Record<string, siteConfig> = {
 
           for (const row of rows) {
             // if (row.classList.contains('js-expandable-line') || row.querySelector('.non-expandable')) continue
-            if (row.classList.contains('inline-comments')) break
+            // if (row.classList.contains('inline-comments')) break
             const code = (row.querySelector('.blob-code-inner') as HTMLElement)?.innerText
             if (row.querySelector('.blob-code-addition')) context += `+ ${code}\n`
             else if (row.querySelector('.blob-code-deletion')) context += `- ${code}\n`
@@ -204,9 +270,38 @@ export const config: Record<string, siteConfig> = {
 
           return context
         },
+        contextPreview: (anchor) => anchor.closest('.js-file').querySelector('.js-file-content'),
         contextPrompt: _t('reviewCodePrompt'),
-        targetInput: (anchor) => anchor.closest('.previewable-comment-form').querySelector('.comment-form-textarea')
-      }
-    ]
+        targetInput: (anchor) => undefined,
+      },
+      // // Github review
+      // {
+      //   condition: (node) => node?.classList?.contains('toolbar-commenting'),
+      //   openCondition: (node) => !!node.closest('.comment-form-textarea'),
+      //   buttonSize: 20,
+      //   buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+      //   // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
+      //   cardContainer: () => document.body,
+      //   context: (anchor) => {
+      //     const parent = anchor.closest('.js-file')
+      //     const table = parent.querySelector('tbody')
+      //     const rows = table.querySelectorAll('tr')
+      //     let context = 'Code changes:\n\n'
+
+      //     for (const row of rows) {
+      //       // if (row.classList.contains('js-expandable-line') || row.querySelector('.non-expandable')) continue
+      //       if (row.classList.contains('inline-comments')) break
+      //       const code = (row.querySelector('.blob-code-inner') as HTMLElement)?.innerText
+      //       if (row.querySelector('.blob-code-addition')) context += `+ ${code}\n`
+      //       else if (row.querySelector('.blob-code-deletion')) context += `- ${code}\n`
+      //       else context += `${code}\n`
+      //     }
+
+      //     return context
+      //   },
+      //   contextPrompt: _t('reviewCodePrompt'),
+      //   targetInput: (anchor) => anchor.closest('.previewable-comment-form').querySelector('.comment-form-textarea')
+      // }
+    ],
   },
 }
