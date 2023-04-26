@@ -250,7 +250,7 @@ function YoozCard({
               </g>
             </svg>
           </div>
-          <div className="yooz-card-title">ChatGPT Copilot</div>
+          <div className="yooz-card-title">Yooz - ChatGPT Copilot</div>
           <div style={{ display: 'flex', marginLeft: 'auto' }}>
             <div
               className="yooz-card-close"

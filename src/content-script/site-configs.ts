@@ -241,17 +241,9 @@ export const config: Record<string, siteConfig> = {
         customNodes: (node) =>
           node?.closest('.repository-content').querySelectorAll('.file-header'),
         openCondition: (node) => !!node.closest('.file-header'),
-        // insertButtonHook: (button, target) => {
-        //   const filesHeader = target.closest('.repository-content').querySelectorAll('.file-header')
-        //   // append header.appendChild(button) to each files-header
-        //   for (const header of filesHeader) {
-        //     header.appendChild(button.cloneNode(true))
-        //   }
-        // },
         buttonSize: 20,
         buttonStyle:
           'width: 30px;height: 20px;display: flex;align-items: center;justify-content: center;',
-        // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
         cardContainer: () => document.body,
         context: (anchor) => {
           const parent = anchor.closest('.js-file')
@@ -260,8 +252,6 @@ export const config: Record<string, siteConfig> = {
           let context = 'Code changes:\n\n'
 
           for (const row of rows) {
-            // if (row.classList.contains('js-expandable-line') || row.querySelector('.non-expandable')) continue
-            // if (row.classList.contains('inline-comments')) break
             const code = (row.querySelector('.blob-code-inner') as HTMLElement)?.innerText
             if (row.querySelector('.blob-code-addition')) context += `+ ${code}\n`
             else if (row.querySelector('.blob-code-deletion')) context += `- ${code}\n`
@@ -274,34 +264,36 @@ export const config: Record<string, siteConfig> = {
         contextPrompt: _t('reviewCodePrompt'),
         targetInput: (anchor) => undefined,
       },
-      // // Github review
-      // {
-      //   condition: (node) => node?.classList?.contains('toolbar-commenting'),
-      //   openCondition: (node) => !!node.closest('.comment-form-textarea'),
-      //   buttonSize: 20,
-      //   buttonStyle: 'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
-      //   // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
-      //   cardContainer: () => document.body,
-      //   context: (anchor) => {
-      //     const parent = anchor.closest('.js-file')
-      //     const table = parent.querySelector('tbody')
-      //     const rows = table.querySelectorAll('tr')
-      //     let context = 'Code changes:\n\n'
+      // Github review
+      {
+        condition: (node) => node?.classList?.contains('toolbar-commenting'),
+        openCondition: (node) => !!node.closest('.comment-form-textarea'),
+        buttonSize: 20,
+        buttonStyle:
+          'width: 40px;height: 20px;display: flex;align-items: center;justify-content: center;',
+        // insertButtonHook: (button, target) => target.insertBefore(button, target.children[1]),
+        cardContainer: () => document.body,
+        context: (anchor) => {
+          const parent = anchor.closest('.js-file')
+          const table = parent.querySelector('tbody')
+          const rows = table.querySelectorAll('tr')
+          let context = 'Code changes:\n\n'
 
-      //     for (const row of rows) {
-      //       // if (row.classList.contains('js-expandable-line') || row.querySelector('.non-expandable')) continue
-      //       if (row.classList.contains('inline-comments')) break
-      //       const code = (row.querySelector('.blob-code-inner') as HTMLElement)?.innerText
-      //       if (row.querySelector('.blob-code-addition')) context += `+ ${code}\n`
-      //       else if (row.querySelector('.blob-code-deletion')) context += `- ${code}\n`
-      //       else context += `${code}\n`
-      //     }
+          for (const row of rows) {
+            // if (row.classList.contains('js-expandable-line') || row.querySelector('.non-expandable')) continue
+            if (row.classList.contains('inline-comments')) break
+            const code = (row.querySelector('.blob-code-inner') as HTMLElement)?.innerText
+            if (row.querySelector('.blob-code-addition')) context += `+ ${code}\n`
+            else if (row.querySelector('.blob-code-deletion')) context += `- ${code}\n`
+            else context += `${code}\n`
+          }
 
-      //     return context
-      //   },
-      //   contextPrompt: _t('reviewCodePrompt'),
-      //   targetInput: (anchor) => anchor.closest('.previewable-comment-form').querySelector('.comment-form-textarea')
-      // }
+          return context
+        },
+        contextPrompt: _t('reviewCodePrompt'),
+        targetInput: (anchor) =>
+          anchor.closest('.previewable-comment-form').querySelector('.comment-form-textarea'),
+      },
     ],
   },
 }

@@ -3,7 +3,7 @@ import Browser from 'webextension-polyfill'
 
 const userConfigWithDefaultValue = {
   enableCLM: false,
-  selectionButton: true,
+  selectionButton: false,
   SRButton: true,
 }
 
