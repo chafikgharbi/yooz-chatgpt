@@ -202,8 +202,8 @@ function YoozCard({
         <div className="yooz-card-header">
           <div>
             <svg
-              width="28"
-              height="28"
+              width="22"
+              height="22"
               style={{ display: 'block' }}
               viewBox="0 0 33.866664 33.866664"
               version="1.1"

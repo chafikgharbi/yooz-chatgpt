@@ -21,6 +21,14 @@ export interface siteConfig {
   }[]
 }
 
+function sanitizeText(text) {
+  console.log(text)
+  return text
+    ?.replace(/(\r?\n) /g, '$1')
+    ?.replace(/(\r?\n){2,}/g, '\n')
+    ?.trim()
+}
+
 export const config: Record<string, siteConfig> = {
   google: {
     anchors: [
@@ -37,9 +45,9 @@ export const config: Record<string, siteConfig> = {
         context: (anchor) => {
           const parent = anchor.closest('.G3.G2')
           if (!parent) return ''
-          const context = `Email:\n${
-            (parent.querySelector('.a3s.aiL') as HTMLElement).innerText
-          }\n\nReply:`
+          const context = `Email:\n---------------\n${sanitizeText(
+            (parent.querySelector('.a3s.aiL') as HTMLElement).innerText,
+          )}\n\nReply:`
           return context
         },
         contextPrompt: _t('replyPrompt'),
@@ -93,28 +101,39 @@ export const config: Record<string, siteConfig> = {
               .querySelector('.msg-overlay-list-bubble')
               .querySelector('.presence-entity__image')
               .getAttribute('alt')
-            if (!lastElement) return chat ? `${chat}\n\n${currentUserName}:` : ''
+            if (!lastElement) return chat ? `${chat}\n${currentUserName}:` : ''
             const msgUserName = lastElement.querySelector('.msg-s-message-group__name')?.innerText
-            const msgText = lastElement.querySelector('.msg-s-event-listitem__body')?.innerText
+            const msgText = sanitizeText(
+              lastElement.querySelector('.msg-s-event-listitem__body')?.innerText,
+            )
             if (msgUserName) {
               if (msgText) {
                 if (i > 5)
                   return (
-                    `${msgUserName}:\n${msgText}\n\n` + (chat ? `${chat}\n${currentUserName}:` : '')
+                    `${msgUserName}:\n---------------\n${msgText}\n\n` +
+                    (chat ? `${chat}\n${currentUserName}:` : '')
                   ) // return last 5 messages
                 return getMessages(
                   anchor,
                   lastElement,
                   ++i,
-                  `${msgUserName}:\n${msgText}\n\n${chat}`,
+                  `${msgUserName}:\n---------------\n${msgText}\n\n${chat}`,
                 )
               } else {
                 if (i > 5)
-                  return `${msgUserName}:\n\n` + (chat ? `${chat}\n${currentUserName}:` : '') // return last 5 messages
-                return getMessages(anchor, lastElement, ++i, `${msgUserName}:\n\n${chat}`)
+                  return (
+                    `${msgUserName}:\n---------------\n` +
+                    (chat ? `${chat}\n${currentUserName}:` : '')
+                  ) // return last 5 messages
+                return getMessages(
+                  anchor,
+                  lastElement,
+                  ++i,
+                  `${msgUserName}:\n---------------\n${chat}`,
+                )
               }
             } else {
-              if (i > 50) return chat ? `${chat}\n\n${currentUserName}:` : '' // It might not reach it without username, but to avoid long message problem
+              if (i > 50) return chat ? `${chat}\n${currentUserName}:` : '' // It might not reach it without username, but to avoid long message problem
               if (msgText) {
                 return getMessages(anchor, lastElement, ++i, `${msgText}\n\n${chat}`)
               } else {
@@ -143,14 +162,14 @@ export const config: Record<string, siteConfig> = {
         },
         context: (anchor) => {
           const parent = anchor.closest('.feed-shared-update-v2')
-          const context = `Post:\n${
-            (parent.querySelector('.update-components-text') as HTMLElement).innerText
-          }`
+          const context = `Post:\n----------\n${sanitizeText(
+            (parent.querySelector('.update-components-text') as HTMLElement).innerText,
+          )}`
           const parentComment = anchor.closest('.comments-comment-item')
           return parentComment
-            ? `${context}\n\nComment:\n${
-                (parentComment.querySelector('.update-components-text') as HTMLElement).innerText
-              }\n\nReply:`
+            ? `${context}\n\nComment:\n----------\n${sanitizeText(
+                (parentComment.querySelector('.update-components-text') as HTMLElement).innerText,
+              )}\n\nReply:`
             : `${context}\n\nReply:`
         },
       },
@@ -186,20 +205,19 @@ export const config: Record<string, siteConfig> = {
             for (const message of messages) {
               const sender = (message.querySelector('.c-message__sender_button') as HTMLElement)
                 ?.innerText
-              const messageText = (message.querySelector('.c-message_kit__blocks') as HTMLElement)
-                ?.innerText
-              context += `${sender ? '\n\n' + '[_yooz_@sender_split_]' + sender + ':\n' : ''}${
-                messageText ? messageText + '\n' : ''
-              }`
+              const messageText = sanitizeText(
+                (message.querySelector('.c-message_kit__blocks') as HTMLElement)?.innerText,
+              )
+              context += `${
+                sender ? '\n' + '[_yooz_@sender_split_]' + sender + ':\n---------------\n' : ''
+              }${messageText ? messageText + '\n' : ''}`
             }
           }
 
           const contextList = context?.split('[_yooz_@sender_split_]')
 
           // Keep last 2 messages
-          context = `${contextList
-            ?.slice(contextList.length - 5)
-            ?.join('')}\n\n${userName?.trim()}:`
+          context = `${contextList?.slice(contextList.length - 5)?.join('')}\n${userName?.trim()}:`
 
           // const context = `Message:\n${(parent?.querySelector('.c-virtual_list__scroll_container') as HTMLElement)?.innerText}\n\n${userName}:`
           return context.trim()
@@ -223,9 +241,9 @@ export const config: Record<string, siteConfig> = {
         context: (anchor) => {
           const parent = anchor.closest('.aVla3')
           if (!parent) return ''
-          const context = `Email:\n${
-            (parent.querySelector('.XbIp4') as HTMLElement).innerText
-          }\n\nReply:`
+          const context = `Email:\n${sanitizeText(
+            (parent.querySelector('.XbIp4') as HTMLElement).innerText,
+          )}\n\nReply:`
           return context
         },
         contextPrompt: _t('replyPrompt'),
