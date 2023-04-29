@@ -1,10 +1,7 @@
-import { CssBaseline, GeistProvider, Radio, Select, Text, Toggle, useToasts } from '@geist-ui/core'
+import { CssBaseline, GeistProvider, Text, Toggle, useToasts } from '@geist-ui/core'
 import { useCallback, useEffect, useState } from 'preact/hooks'
 import '../base.css'
-import {
-  getUserConfig,
-  updateUserConfig,
-} from '../config'
+import { getUserConfig, updateUserConfig } from '../config'
 import logo from '../logo.png'
 import { getExtensionVersion, _t } from '../utils'
 import ProviderSelect from './ProviderSelect'
@@ -42,7 +39,7 @@ function OptionsPage() {
       <nav className="flex flex-row justify-between items-center mt-5 px-2">
         <div className="flex flex-row items-center gap-2">
           <img src={logo} className="w-10 h-10 rounded-lg" />
-          <span className="font-semibold">{_t('appName')} (v{getExtensionVersion()})</span>
+          <span className="font-semibold">Yooz - ChatGPT Copilot (v{getExtensionVersion()})</span>
         </div>
         <div className="flex flex-row gap-3">
           <a
@@ -64,31 +61,35 @@ function OptionsPage() {
           {_t('optMisc')}
         </Text>
         <div className="flex flex-row mb-5">
-          <div className='mt-1'>
-            <Toggle checked={showSelectionButton} onChange={({ target }) => onToggleSelectionButtonChange(target.checked)} />
+          <div className="mt-1">
+            <Toggle
+              checked={showSelectionButton}
+              onChange={({ target }) => onToggleSelectionButtonChange(target.checked)}
+            />
           </div>
-          <Text b className='ml-4'>
+          <Text b className="ml-4">
             {_t('optSelectionButton')}
           </Text>
         </div>
         <div className="flex flex-row mb-5">
-          <div className='mt-1'>
-            <Toggle checked={showSRButton} onChange={({ target }) => onToggleSRButtonChange(target.checked)} />
+          <div className="mt-1">
+            <Toggle
+              checked={showSRButton}
+              onChange={({ target }) => onToggleSRButtonChange(target.checked)}
+            />
           </div>
-          <div className='ml-4'>
-            <Text b className='block'>
+          <div className="ml-4">
+            <Text b className="block">
               {_t('optSRButton')}
             </Text>
-            <Text className='block mt-1 text-sm'>
-              {_t('optSRButtonDesc')}
-            </Text>
+            <Text className="block mt-1 text-sm">{_t('optSRButtonDesc')}</Text>
           </div>
         </div>
         <div className="flex flex-row">
-          <div className='mt-1'>
+          <div className="mt-1">
             <Toggle initialChecked disabled />
           </div>
-          <Text b className='ml-4'>
+          <Text b className="ml-4">
             {_t('optAutoDelete')}
           </Text>
         </div>
